@@ -1,0 +1,3 @@
+[submodule "ConsoleFramework/vendor/GLFW"]
+	path = ConsoleFramework/vendor/GLFW
+	url = https://github.com/glfw/glfw.git

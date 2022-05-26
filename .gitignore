@@ -1,0 +1,8 @@
+vendor/premake5
+**.sln
+**.vcxproj
+**.vcxproj.user
+/.vs
+**.bat
+**/bin
+**/bin-int
