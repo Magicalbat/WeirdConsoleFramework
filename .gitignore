@@ -2,6 +2,7 @@ vendor/premake5
 **.sln
 **.vcxproj
 **.vcxproj.user
+**.vcxproj.filters
 /.vs
 **.bat
 **/bin
