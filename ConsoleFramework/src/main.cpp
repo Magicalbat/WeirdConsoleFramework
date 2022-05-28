@@ -6,6 +6,8 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#include "stb_image.h"
+
 uint32_t loadShader(const char* vertexPath, const char* fragmentPath)
 {
 	std::ifstream vStream(vertexPath);
@@ -114,24 +116,48 @@ int main()
 	
 	std::cout << "\n\x1b[36mVersion: " << glGetString(GL_VERSION) << ", Renderer: " << glGetString(GL_RENDERER) << "\x1b[0m" << std::endl;
 
-    float vertices[15] = {
-        -0.5f, -0.5f,   1.0f, 0.0f, 0.0f,
-         0.0f,  0.5f,   0.0f, 1.0f, 0.0f,
-         0.5f, -0.5f,   0.0f, 0.0f, 1.0f
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+	int width, height, nrChannels;
+	uint8_t* data = stbi_load("res/test.png", &width, &height, &nrChannels, 0);
+
+
+	uint32_t texture;
+	glGenTextures(1, &texture);
+	glBindTexture(GL_TEXTURE_2D, texture);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	
+	stbi_image_free(data);
+
+	// Pos, UV, Color
+    float vertices[28] = {
+		-0.5f, -0.5f,    0.0f, 1.0f,    0.0f, 0.0f, 0.0f,
+		-0.5f,  0.5f,    0.0f, 0.0f,    1.0f, 0.0f, 0.0f,
+		 0.5f,  0.5f,    1.0f, 0.0f,    0.0f, 1.0f, 0.0f,
+		 0.5f, -0.5f,    1.0f, 1.0f,    0.0f, 0.0f, 1.0f
     };
 
     uint32_t vertexBuffer;
     glGenBuffers(1, &vertexBuffer);
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 15, &vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 28, &vertices, GL_STATIC_DRAW);
 
-    uint32_t stride = sizeof(float) * 5;
+    uint32_t stride = sizeof(float) * 7;
 
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, stride, 0);
 
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride, (const void*)(sizeof(float) * 2));
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, stride, (const void*)(sizeof(float) * 2));
+
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, stride, (const void*)(sizeof(float) * 4));
 
     uint32_t shaderProg = loadShader("res/vertex.glsl", "res/fragment.glsl");
     glUseProgram(shaderProg);
@@ -141,7 +167,9 @@ int main()
 	{
 		glClear(GL_COLOR_BUFFER_BIT);
 
-        glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindTexture(GL_TEXTURE_2D, texture);
+		glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+        glDrawArrays(GL_QUADS, 0, 8);
 
 		glfwSwapBuffers(window);
 
