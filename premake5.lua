@@ -7,6 +7,7 @@ outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 IncludeDirs = {}
 IncludeDirs["GLFW"] = "%{prj.name}/vendor/GLFW/include"
 IncludeDirs["glad"] = "%{prj.name}/vendor/glad/include"
+IncludeDirs["stb_image"] = "%{prj.name}/vendor/stb_image/include"
 
 include "ConsoleFramework/vendor/GLFW_premake5.lua"
 include "ConsoleFramework/vendor/glad_premake5.lua"
@@ -22,14 +23,18 @@ project "ConsoleFramework"
     files
     {
         "%{prj.name}/src/**.h",
-        "%{prj.name}/src/**.cpp"
+        "%{prj.name}/src/**.cpp",
+
+        "%{prj.name}/vendor/stb_image/include/stb_image/**.h",
+        "%{prj.name}/vendor/stb_image/**.cpp",
     }
 
     includedirs
     {
         "%{prj.name}/src",
         "%{IncludeDirs['GLFW']}",
-        "%{IncludeDirs['glad']}"
+        "%{IncludeDirs['glad']}",
+        "%{IncludeDirs['stb_image']}",
     }
 
     links

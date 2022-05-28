@@ -6,7 +6,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-#include "stb_image.h"
+#include "stb_image/stb_image.h"
 
 uint32_t loadShader(const char* vertexPath, const char* fragmentPath)
 {
@@ -125,12 +125,11 @@ int main()
 	int width, height, nrChannels;
 	uint8_t* data = stbi_load("res/test.png", &width, &height, &nrChannels, 0);
 
-
 	uint32_t texture;
 	glGenTextures(1, &texture);
 	glBindTexture(GL_TEXTURE_2D, texture);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
 	glGenerateMipmap(GL_TEXTURE_2D);
 	
 	stbi_image_free(data);
