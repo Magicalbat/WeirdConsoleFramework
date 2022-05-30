@@ -8,6 +8,7 @@ IncludeDirs = {}
 IncludeDirs["GLFW"] = "%{prj.name}/vendor/GLFW/include"
 IncludeDirs["glad"] = "%{prj.name}/vendor/glad/include"
 IncludeDirs["stb_image"] = "%{prj.name}/vendor/stb_image/include"
+IncludeDirs["glm"] = "%{prj.name}/vendor/glm"
 
 include "ConsoleFramework/vendor/GLFW_premake5.lua"
 include "ConsoleFramework/vendor/glad_premake5.lua"
@@ -27,6 +28,9 @@ project "ConsoleFramework"
 
         "%{prj.name}/vendor/stb_image/include/stb_image/**.h",
         "%{prj.name}/vendor/stb_image/**.cpp",
+
+        "%{prj.name}/vendor/glm/glm/**.hpp",
+        "%{prj.name}/vendor/glm/glm/**.inl",
     }
 
     includedirs
@@ -35,6 +39,7 @@ project "ConsoleFramework"
         "%{IncludeDirs['GLFW']}",
         "%{IncludeDirs['glad']}",
         "%{IncludeDirs['stb_image']}",
+        "%{IncludeDirs['glm']}"
     }
 
     links
