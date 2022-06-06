@@ -1,6 +1,7 @@
-workspace "ConsoleFramework"
+workspace "WeirdConsoleFramework"
     configurations {"Debug", "Release"}
     architecture "x64"
+    startproject "WeirdConsoleFramework"
 
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
@@ -10,11 +11,11 @@ IncludeDirs["glad"] = "%{prj.name}/vendor/glad/include"
 IncludeDirs["stb_image"] = "%{prj.name}/vendor/stb_image/include"
 IncludeDirs["glm"] = "%{prj.name}/vendor/glm"
 
-include "ConsoleFramework/vendor/GLFW_premake5.lua"
-include "ConsoleFramework/vendor/glad_premake5.lua"
+include "WeirdConsoleFramework/vendor/GLFW_premake5.lua"
+include "WeirdConsoleFramework/vendor/glad_premake5.lua"
 
-project "ConsoleFramework"
-    location "ConsoleFramework"
+project "WeirdConsoleFramework"
+    location "WeirdConsoleFramework"
     kind "ConsoleApp"
     language "C++"
 

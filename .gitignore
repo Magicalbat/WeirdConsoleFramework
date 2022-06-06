@@ -4,6 +4,5 @@ vendor/premake5
 **.vcxproj.user
 **.vcxproj.filters
 /.vs
-**.bat
 **/bin
 **/bin-int

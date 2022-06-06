@@ -1,6 +1,6 @@
 [submodule "ConsoleFramework/vendor/GLFW"]
-	path = ConsoleFramework/vendor/GLFW
+	path = WeirdConsoleFramework/vendor/GLFW
 	url = https://github.com/glfw/glfw.git
 [submodule "ConsoleFramework/vendor/glm"]
-	path = ConsoleFramework/vendor/glm
+	path = WeirdConsoleFramework/vendor/glm
 	url = https://github.com/g-truc/glm.git
