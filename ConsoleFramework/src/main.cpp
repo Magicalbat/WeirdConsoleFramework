@@ -2,6 +2,7 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
+#include <chrono>
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -11,21 +12,6 @@
 #include "glm/gtc/matrix_transform.hpp"
 
 #include "stb_image/stb_image.h"
-
-struct Vertex
-{
-	glm::vec2 pos;
-	glm::vec2 uv;
-	glm::vec3 color;
-
-	Vertex()
-		:pos(0,0), uv(0,0), color(0,0,0)
-	{}
-
-	Vertex(glm::vec2 pos, glm::vec2 uv, glm::vec3 color)
-		:pos(pos), uv(uv), color(color)
-	{}
-};
 
 const uint32_t WIDTH = 160/2;
 const uint32_t HEIGHT = 90/2;
@@ -42,7 +28,19 @@ constexpr glm::vec2 getCharUV(uint8_t c)
 	return { 0.0f, 0.0f };
 }
 
-uint32_t loadShader(const char* vertexPath, const char* fragmentPath)
+struct CoCharData
+{
+	glm::vec2 uv;
+	glm::vec3 fgColor;
+};
+
+struct CoChar
+{
+	uint8_t chr;
+	glm::vec3 col;
+};
+
+unsigned int loadShader(const char* vertexPath, const char* fragmentPath)
 {
 	std::ifstream vStream(vertexPath);
 	std::string vertexSource;
@@ -143,11 +141,11 @@ int main()
 		glfwTerminate();
 		return -1;
 	}
-	
+
 	glfwMakeContextCurrent(window);
 
 	gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
-	
+
 	std::cout << "\n\x1b[36mVersion: " << glGetString(GL_VERSION) << ", Renderer: " << glGetString(GL_RENDERER) << "\x1b[0m" << std::endl;
 
 	uint32_t texture;
@@ -161,71 +159,78 @@ int main()
 
 	stbi_image_free(data);
 
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER); 
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
-	std::vector<Vertex> vertices(WIDTH * HEIGHT * 4);
-	for (int y = 0; y < HEIGHT; y++)
+	std::vector<CoChar> screen(WIDTH * HEIGHT);
+	for (auto& item : screen)
 	{
-		for (int x = 0; x < WIDTH; x++)
-		{
-			int index = (x*4) + (y*4) * WIDTH;
+		item = { ' ', {1, 1, 1} };
+	}
 
-			vertices[index] = {
-				{ x * CHAR_WIDTH, y * CHAR_HEIGHT },
-				getCharUV('a'),
-				{ 1.0f,1.0f,1.0f }
-			};
-			vertices[index + 1] = {
-				{ x * CHAR_WIDTH + CHAR_WIDTH, y * CHAR_HEIGHT },
-				getCharUV('a') + glm::vec2(CHAR_UV_STEP, 0),
-				{ 1.0f,1.0f,1.0f }
-			};
-			vertices[index + 2] = {
-				{ x * CHAR_WIDTH + CHAR_WIDTH, y * CHAR_HEIGHT + CHAR_HEIGHT },
-				getCharUV('a') + glm::vec2(CHAR_UV_STEP, 1),
-				{ 1.0f,1.0f,1.0f }
-			};
-			vertices[index + 3] = {
-				{ x * CHAR_WIDTH, y * CHAR_HEIGHT + CHAR_HEIGHT },
-				getCharUV('a') + glm::vec2(0, 1),
-				{ 1.0f,1.0f,1.0f }
-			};
+	std::vector<glm::vec2> translations(WIDTH * HEIGHT);
+	std::vector<CoCharData> cochars(WIDTH * HEIGHT);
+	for (int x = 0; x < WIDTH; x++)
+	{
+		for (int y = 0; y < HEIGHT; y++)
+		{
+			translations[x + y * WIDTH] = { x * CHAR_WIDTH, y * CHAR_HEIGHT };
+			cochars[x + y * WIDTH] = { getCharUV((x + y * WIDTH) % 255), {0, 1, 0} };
 		}
 	}
 
-	std::vector<std::pair<uint8_t, glm::vec3>> screen(WIDTH * HEIGHT);
-	for (auto& item : screen)
-	{
-		item.first = ' ';
-		item.second = glm::vec3(0);
-	}
+	unsigned int translationBuffer;
+	glGenBuffers(1, &translationBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, translationBuffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * WIDTH * HEIGHT, translations.data(), GL_STATIC_DRAW);
 
-    uint32_t vertexBuffer;
-    glGenBuffers(1, &vertexBuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * vertices.size(), vertices.data(), GL_DYNAMIC_DRAW);
+	unsigned int cocharBuffer;
+	glGenBuffers(1, &cocharBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, cocharBuffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(CoCharData) * WIDTH * HEIGHT, cochars.data(), GL_DYNAMIC_DRAW);
 
-    uint32_t stride = sizeof(Vertex);
+	float positions[8] = {
+		0.0f, 0.0f,
+		CHAR_WIDTH, 0.0f,
+		CHAR_WIDTH, CHAR_HEIGHT,
+		0.0f, CHAR_HEIGHT
+	};
 
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, stride, 0);
+	unsigned int positionBuffer;
+	glGenBuffers(1, &positionBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, positionBuffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 8, &positions[0], GL_STATIC_DRAW);
 
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, stride, (const void*)(sizeof(glm::vec2)));
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, (void*)(0));
 
-    glEnableVertexAttribArray(2);
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, stride, (const void*)(sizeof(glm::vec2) + sizeof(glm::vec2)));
+	glBindBuffer(GL_ARRAY_BUFFER, translationBuffer);
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(glm::vec2), (void*)(0));
+	glVertexAttribDivisor(1, 1);
 
-    uint32_t shaderProg = loadShader("res/vertex.glsl", "res/fragment.glsl");
+	glBindBuffer(GL_ARRAY_BUFFER, cocharBuffer);
+	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(CoCharData), (void*)(0));
+	glVertexAttribDivisor(2, 1);
+	glEnableVertexAttribArray(3);
+	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(CoCharData), (void*)(sizeof(glm::vec2)));
+	glVertexAttribDivisor(3, 1);
+
+	glBindBuffer(GL_ARRAY_BUFFER, positionBuffer);
+
+    unsigned int shaderProg = loadShader("res/vertex.glsl", "res/fragment.glsl");
     glUseProgram(shaderProg);
 
-	uint32_t modelProjLoc = glGetUniformLocation(shaderProg, "uModelProj");
+	unsigned int uvStepLoc = glGetUniformLocation(shaderProg, "uUvStep");
+	unsigned int modelProjLoc = glGetUniformLocation(shaderProg, "uModelProj");
 
-	glm::mat4 orthoProj = glm::ortho(0.0f, 640.0f, 480.0f, 0.0f);// , -1.0f, 1.0f);
+	glUniform2f(uvStepLoc, CHAR_UV_STEP, 1.0f);
+
+	glm::mat4 orthoProj = glm::ortho(0.0f, (float)(WIDTH*CHAR_WIDTH), (float)(HEIGHT*CHAR_HEIGHT), 0.0f);// , -1.0f, 1.0f);
 	glUniformMatrix4fv(modelProjLoc, 1, GL_TRUE, glm::value_ptr(orthoProj));
 
 	std::vector<glm::vec2> chars(WIDTH);
@@ -234,23 +239,30 @@ int main()
 		pos.x = (float)(rand() % WIDTH);
 		pos.y = -(float)(rand() % HEIGHT);
 	}
+	
+    auto prevTime = std::chrono::high_resolution_clock::now();
 
 	glClearColor(0, 1, 1, 1);
 	while (!glfwWindowShouldClose(window))
 	{
-		glClear(GL_COLOR_BUFFER_BIT);
+		auto curTime = std::chrono::high_resolution_clock::now();
+		auto delta_ms = std::chrono::duration_cast<std::chrono::milliseconds>(curTime - prevTime);
+		prevTime = curTime;
 
-		glBindTexture(GL_TEXTURE_2D, texture);
-		glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+		float delta = (float)delta_ms.count() * 0.001f;
+		std::string title = "ConsoleFramework " + std::to_string((int)(1.0f / delta)) + "fps";
+		glfwSetWindowTitle(window, title.c_str());
+		
+		glClear(GL_COLOR_BUFFER_BIT);
 
 		for (auto& pos : chars)
 		{
-			pos.y += 0.1;
+			pos.y += 0.1f;
 
 			if (fmodf(pos.y, 1.0f) < 0.1 && pos.y >= 0 && pos.y < HEIGHT)
 			{
-				screen[(int)pos.x + (int)pos.y * WIDTH].first = rand() % (255 - ' ') + ' ';
-				screen[(int)pos.x + (int)pos.y * WIDTH].second = glm::vec3(0, 1, 0);
+				screen[(int)pos.x + (int)pos.y * WIDTH].chr = rand() % (255 - ' ') + ' ';
+				screen[(int)pos.x + (int)pos.y * WIDTH].col = glm::vec3(0, 1, 0);
 			}
 
 			if (pos.y > HEIGHT)
@@ -262,29 +274,23 @@ int main()
 
 		for (auto& item : screen)
 		{
-			if (item.second.y > 0)
-				item.second.y -= 0.0025f;
+			if (item.col.y > 0)
+				item.col.y -= 0.0025f;
 		}
 
 		for (int y = 0; y < HEIGHT; y++)
 		{
 			for (int x = 0; x < WIDTH; x++)
 			{
-				int index = (x*4) + (y*4) * WIDTH;
-				int screenIndex = x + y * WIDTH;
-	
-				vertices[index + 0].uv = getCharUV(screen[screenIndex].first);
-				vertices[index + 1].uv = getCharUV(screen[screenIndex].first) + glm::vec2(CHAR_UV_STEP, 0);
-				vertices[index + 2].uv = getCharUV(screen[screenIndex].first) + glm::vec2(CHAR_UV_STEP, 1);
-				vertices[index + 3].uv = getCharUV(screen[screenIndex].first) + glm::vec2(0, 1);
-
-				for (int i = 0; i < 4; i++)
-					vertices[index + i].color = screen[screenIndex].second;
+				int index = x + y * WIDTH;
+				cochars[index] = {getCharUV(screen[index].chr), screen[index].col};
 			}
 		}
-		glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(Vertex) * vertices.size(), vertices.data());
+		glBindBuffer(GL_ARRAY_BUFFER, cocharBuffer);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(CoCharData) * cochars.size(), cochars.data());
 
-        glDrawArrays(GL_QUADS, 0, vertices.size() * 2);
+		glBindBuffer(GL_ARRAY_BUFFER, positionBuffer);
+        glDrawArraysInstanced(GL_QUADS, 0, 4, WIDTH*HEIGHT);
 
 		glfwSwapBuffers(window);
 
@@ -292,7 +298,9 @@ int main()
 	}
 
     glDeleteProgram(shaderProg);
-    glDeleteBuffers(1, &vertexBuffer);
+	glDeleteBuffers(1, &positionBuffer);
+	glDeleteBuffers(1, &translationBuffer);
+	glDeleteBuffers(1, &cocharBuffer);
 
 	glfwTerminate();
 
