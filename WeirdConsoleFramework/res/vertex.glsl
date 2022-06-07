@@ -16,5 +16,5 @@ void main()
 	uv = aUV + vec2(uUvStep.x * float(gl_VertexID == 1 || gl_VertexID == 2), uUvStep.y * float(gl_VertexID > 1));
 	color = aColor;
 
-	gl_Position = vec4(aPos.xy + aTranslate, 0, 1) * uModelProj;
+	gl_Position = vec4(aPos.xy + aTranslate, 0, 1) * uProjection;
 }
