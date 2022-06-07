@@ -28,18 +28,6 @@ constexpr glm::vec2 getCharUV(uint8_t c)
 	return { 0.0f, 0.0f };
 }
 
-struct CoCharData
-{
-	glm::vec2 uv;
-	glm::vec3 fgColor;
-};
-
-struct CoChar
-{
-	uint8_t chr;
-	glm::vec3 col;
-};
-
 unsigned int loadShader(const char* vertexPath, const char* fragmentPath)
 {
 	std::ifstream vStream(vertexPath);
@@ -130,6 +118,8 @@ unsigned int loadShader(const char* vertexPath, const char* fragmentPath)
 
 int main()
 {
+	using namespace wcf;
+
 	GLFWwindow* window;
 
 	if (!glfwInit())
@@ -165,14 +155,14 @@ int main()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
-	std::vector<CoChar> screen(WIDTH * HEIGHT);
+	std::vector<Cochar> screen(WIDTH * HEIGHT);
 	for (auto& item : screen)
 	{
 		item = { ' ', {1, 1, 1} };
 	}
 
 	std::vector<glm::vec2> translations(WIDTH * HEIGHT);
-	std::vector<CoCharData> cochars(WIDTH * HEIGHT);
+	std::vector<CocharData> cochars(WIDTH * HEIGHT);
 	for (int x = 0; x < WIDTH; x++)
 	{
 		for (int y = 0; y < HEIGHT; y++)
@@ -190,7 +180,7 @@ int main()
 	unsigned int cocharBuffer;
 	glGenBuffers(1, &cocharBuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, cocharBuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(CoCharData) * WIDTH * HEIGHT, cochars.data(), GL_DYNAMIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(CocharData) * WIDTH * HEIGHT, cochars.data(), GL_DYNAMIC_DRAW);
 
 	float positions[8] = {
 		0.0f, 0.0f,
@@ -214,10 +204,10 @@ int main()
 
 	glBindBuffer(GL_ARRAY_BUFFER, cocharBuffer);
 	glEnableVertexAttribArray(2);
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(CoCharData), (void*)(0));
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(CocharData), (void*)(0));
 	glVertexAttribDivisor(2, 1);
 	glEnableVertexAttribArray(3);
-	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(CoCharData), (void*)(sizeof(glm::vec2)));
+	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(CocharData), (void*)(sizeof(glm::vec2)));
 	glVertexAttribDivisor(3, 1);
 
 	glBindBuffer(GL_ARRAY_BUFFER, positionBuffer);
@@ -287,7 +277,7 @@ int main()
 			}
 		}
 		glBindBuffer(GL_ARRAY_BUFFER, cocharBuffer);
-		glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(CoCharData) * cochars.size(), cochars.data());
+		glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(CocharData) * cochars.size(), cochars.data());
 
 		glBindBuffer(GL_ARRAY_BUFFER, positionBuffer);
         glDrawArraysInstanced(GL_QUADS, 0, 4, WIDTH*HEIGHT);
