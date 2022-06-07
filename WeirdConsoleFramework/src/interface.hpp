@@ -32,12 +32,18 @@ namespace wcf
         ~OpenGL_Interface();
 
         void DrawScreen(Screen& screen) override;
-        void SetCochar(int x, int y, Cochar cochar) override;
+
+    private:
+
+        unsigned int loadShaderProgram(const char* vertexPath, const char* fragmentPath);
 
     private:
 
         unsigned int m_ShaderProgram;
 
         unsigned int m_PositionBuffer, m_TranslationBuffer, m_CocharBuffer;
+
+	    std::vector<glm::vec2> m_Translations;
+	    std::vector<CocharData> m_Cochars;
     }
 }

@@ -6,7 +6,7 @@ layout(location = 2) in vec2 aUV;
 layout(location = 3) in vec3 aColor;
 
 uniform vec2 uUvStep;
-uniform mat4 uModelProj;
+uniform mat4 uProjection;
 
 out vec2 uv;
 out vec3 color;

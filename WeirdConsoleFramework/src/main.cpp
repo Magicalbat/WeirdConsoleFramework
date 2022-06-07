@@ -216,7 +216,7 @@ int main()
     glUseProgram(shaderProg);
 
 	unsigned int uvStepLoc = glGetUniformLocation(shaderProg, "uUvStep");
-	unsigned int modelProjLoc = glGetUniformLocation(shaderProg, "uModelProj");
+	unsigned int modelProjLoc = glGetUniformLocation(shaderProg, "uProjection");
 
 	glUniform2f(uvStepLoc, CHAR_UV_STEP, 1.0f);
 
