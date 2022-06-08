@@ -4,8 +4,6 @@
 #include <sstream>
 #include <iostream>
 
-#include "glad/glad.h"
-
 #include "glm/gtc/type_ptr.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 
@@ -16,6 +14,33 @@ using namespace wcf;
 OpenGL_Interface::OpenGL_Interface(uint32_t width, uint32_t height, uint32_t charWidth, uint32_t charHeight)
     :Interface(width, height, charWidth, charHeight), m_Translations(width * height), m_Cochars(width * height)
 {
+	glfwSetErrorCallback(
+		[](int error, const char* description)
+		{
+			std::cout << "GLFW Error " << error << ": " << description << std::endl;
+		}
+	);
+
+	if (!glfwInit())
+	{
+		std::cout << "GLFW failed to init." << std::endl;
+		exit(-1);
+	}
+
+	m_Window = glfwCreateWindow(width * charWidth, height * charHeight, "Console Framework", NULL, NULL);
+	if (!m_Window)
+	{
+		glfwTerminate();
+		std::cout << "GLFW failed to create window." << std::endl;
+		exit(-1);
+	}
+
+	glfwMakeContextCurrent(m_Window);
+
+	gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
+
+	std::cout << "\n\x1b[36mVersion: " << glGetString(GL_VERSION) << ", Renderer: " << glGetString(GL_RENDERER) << "\x1b[0m" << std::endl;
+
 	uint32_t texture;
 	glGenTextures(1, &texture);
 	glBindTexture(GL_TEXTURE_2D, texture);
@@ -94,9 +119,16 @@ OpenGL_Interface::~OpenGL_Interface()
 	glDeleteBuffers(1, &m_PositionBuffer);
 	glDeleteBuffers(1, &m_TranslationBuffer);
 	glDeleteBuffers(1, &m_CocharBuffer);
+
+	glfwTerminate();
 }
 
-void OpenGL_Interface::drawScreen(Screen& screen)
+void OpenGL_Interface::clear()
+{
+	glClearColor(0, 0, 0, 1);
+}
+
+void OpenGL_Interface::drawScreen(std::vector<Cochar>& screen)
 {
     for (uint32_t y = 0; y < m_Height; y++)
     {
@@ -111,7 +143,18 @@ void OpenGL_Interface::drawScreen(Screen& screen)
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(CocharData) * m_Cochars.size(), m_Cochars.data());
 
     glBindBuffer(GL_ARRAY_BUFFER, m_PositionBuffer);
+
+	glClear(GL_COLOR_BUFFER_BIT);
+
     glDrawArraysInstanced(GL_QUADS, 0, 4, m_Width * m_Height);
+
+	glfwSwapBuffers(m_Window);
+	glfwPollEvents();
+}
+
+bool OpenGL_Interface::running()
+{
+	return !glfwWindowShouldClose(m_Window);
 }
 
 unsigned int OpenGL_Interface::loadShaderProgram(const char* vertexPath, const char* fragmentPath)

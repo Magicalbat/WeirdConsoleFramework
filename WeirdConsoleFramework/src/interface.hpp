@@ -2,12 +2,14 @@
 
 #include <vector>
 
+#include "glad/glad.h"
+#include "GLFW/glfw3.h"
+
 #include "cochar.hpp"
+#include "wcf.hpp"
 
 namespace wcf
 {
-    typedef std::vector<Cochar> Screen;
-
     // Wrappers for specific graphical APIs
     // For exapmle, there will be an OpenGL and maybe a DirectX interface
     // They will handle all graphics and input
@@ -18,8 +20,11 @@ namespace wcf
             :m_Width(width), m_Height(height), m_CharWidth(charWidth), m_CharHeight(charHeight)
         {}
 
-        virtual void drawScreen(Screen& screen) {}
+        virtual void clear() {}
+        virtual void drawScreen(std::vector<Cochar>& screen) {}
     
+        virtual bool running() { return false; }
+
     protected:
         uint32_t m_Width, m_Height, m_CharWidth, m_CharHeight;
     };
@@ -31,7 +36,10 @@ namespace wcf
         OpenGL_Interface(uint32_t width, uint32_t height, uint32_t charWidth, uint32_t charHeight);
         ~OpenGL_Interface();
 
-        virtual void drawScreen(Screen& screen) override;
+        virtual void clear() override;
+        virtual void drawScreen(std::vector<Cochar>& screen) override;
+
+        virtual bool running() override;
 
     private:
 
@@ -45,6 +53,8 @@ namespace wcf
 		}
 
     private:
+
+        GLFWwindow* m_Window;
 
         unsigned int m_ShaderProgram;
 
