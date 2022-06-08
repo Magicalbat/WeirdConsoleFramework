@@ -47,7 +47,6 @@ int main()
 		auto curTime = std::chrono::high_resolution_clock::now();
 		auto delta_ms = std::chrono::duration_cast<std::chrono::milliseconds>(curTime - prevTime);
 		prevTime = curTime;
-
 		float delta = (float)delta_ms.count() * 0.001f;
 		
 		for (auto& pos : chars)
