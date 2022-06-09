@@ -2,17 +2,8 @@
 #include <vector>
 #include <chrono>
 
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
-
-#include "glm/gtx/string_cast.hpp"
-#include "glm/gtc/type_ptr.hpp"
-#include "glm/gtc/matrix_transform.hpp"
-
-#include "stb_image/stb_image.h"
-
-#include "cochar.hpp"
-#include "interface.hpp"
+#include "wcf.hpp"
+#include "vector2.hpp"
 
 const uint32_t WIDTH = 160;
 const uint32_t HEIGHT = 90;
@@ -23,41 +14,20 @@ const float CHAR_UV_STEP = 1.0f / 225.0f;
 
 int main()
 {
-	using namespace wcf;
+	wcf::init(WIDTH, HEIGHT, CHAR_WIDTH, CHAR_HEIGHT);
 
-	OpenGL_Interface glInterface(WIDTH, HEIGHT, CHAR_WIDTH, CHAR_HEIGHT);
-
-	std::vector<Cochar> screen(WIDTH * HEIGHT);
-	for (auto& item : screen)
-	{
-		item = { ' ', {1, 1, 1} };
-	}
-
-	std::vector<glm::vec2> chars(WIDTH);
+	std::vector<wcf::Vector2> chars(WIDTH);
 	for (auto& pos : chars)
 	{
 		pos.x = (float)(rand() % WIDTH);
 		pos.y = -(float)(rand() % HEIGHT);
 	}
-	
-    auto prevTime = std::chrono::high_resolution_clock::now();
 
-	while (glInterface.running())
+	auto update = [&](float delta)
 	{
-		auto curTime = std::chrono::high_resolution_clock::now();
-		auto delta_ms = std::chrono::duration_cast<std::chrono::milliseconds>(curTime - prevTime);
-		prevTime = curTime;
-		float delta = (float)delta_ms.count() * 0.001f;
-		
 		for (auto& pos : chars)
 		{
-			pos.y += 0.1f;
-
-			if (fmodf(pos.y, 1.0f) < 0.1f && pos.y >= 0 && pos.y < HEIGHT)
-			{
-				screen[(int)pos.x + (int)pos.y * WIDTH].chr = rand() % (255 - ' ') + ' ';
-				screen[(int)pos.x + (int)pos.y * WIDTH].col = glm::vec3(0, 1, 0);
-			}
+			pos.y += 5.0f * delta;
 
 			if (pos.y > HEIGHT)
 			{
@@ -65,15 +35,32 @@ int main()
 				pos.y = -(float)(rand() % 10);
 			}
 		}
+	};
 
-		for (auto& item : screen)
+	auto draw = [&]() 
+	{
+		for (auto& pos : chars)
 		{
-			if (item.col.y > 0)
-				item.col.y -= 0.0025f;
+			if (fmodf(pos.y, 1.0f) < 0.1f && pos.y >= 0 && pos.y < HEIGHT)
+			{
+				uint8_t chr = rand() % (255 - ' ') + ' ';
+				wcf::setCochar((int)pos.x, (int)pos.y, { chr, glm::vec3(0, 1, 0) });
+			}
 		}
 
-		glInterface.drawScreen(screen);
-	}
+		for (int x = 0; x < wcf::width(); x++)
+		{
+			for (int y = 0; y < wcf::height(); y++)
+			{
+				wcf::Cochar& cochar = wcf::getCochar(x, y);
+				if (cochar.col.y > 0)
+					cochar.col.y -= 0.0025f;
+			}
+		}
+			
+	};
+	
+	wcf::start(60.0f, update, draw);
 
 	return 0;
 }

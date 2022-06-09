@@ -1,21 +1,26 @@
 #include "wcf.hpp"
 
-using namespace wcf;
+#include <iostream>
 
-static Internal::InternalData sData;
+static wcf::Internal::InternalData sData;
 
-void init(uint32_t width, uint32_t height, uint32_t charWidth, uint32_t charHeight)
+void wcf::init(uint32_t width, uint32_t height, uint32_t charWidth, uint32_t charHeight)
 {
     sData = {
         width, height, charWidth, charHeight,
         std::vector<Cochar>(width*height),
         std::make_shared<OpenGL_Interface>(width, height, charWidth, charHeight)
     };
+
+    for (auto& item : sData.screen)
+    {
+        item = { ' ', {1, 1, 1} };
+    }
 }
 
-void start(float fps, std::function<void(float delta)> update, std::function<void()> draw)
+void wcf::start(float fps, std::function<void(float delta)> update, std::function<void()> draw)
 {
-    float delta = 1.0f / delta;
+    float delta = 1.0f / fps;
     float accumulator = 0.0f;
 
     auto currentTime = std::chrono::high_resolution_clock::now();
@@ -31,18 +36,27 @@ void start(float fps, std::function<void(float delta)> update, std::function<voi
         accumulator += frameTime;
         while (accumulator >= delta)
         {
-            update();
+            update(delta);
 
             accumulator -= delta;
         }
 
         draw();
         sData.interface->drawScreen(sData.screen);
-
     }
 }
 
-uint32_t width()       { return sData.width; }
-uint32_t height()      { return sData.height; }
-uint32_t charWidth()   { return sData.charWidth; }
-uint32_t charHeight()  { return sData.charHeight; }
+wcf::Cochar& wcf::getCochar(int x, int y)
+{
+    return sData.screen[x + y * sData.width];
+}
+
+void wcf::setCochar(int x, int y, wcf::Cochar cochar)
+{
+    sData.screen[x + y * sData.width] = cochar;
+}
+
+uint32_t wcf::width()        { return sData.width; }
+uint32_t wcf::height()       { return sData.height; }
+uint32_t wcf::charWidth()    { return sData.charWidth; }
+uint32_t wcf::charHeight()   { return sData.charHeight; }

@@ -23,6 +23,9 @@ namespace wcf
 	void init(uint32_t width, uint32_t height, uint32_t charWidth, uint32_t charHeight);
 	void start(float fps, std::function<void(float delta)> update, std::function<void()> draw);
 
+	Cochar& getCochar(int x, int y);
+	void setCochar(int x, int y, Cochar cochar);
+
 	uint32_t width();
 	uint32_t height();
 	uint32_t charWidth();

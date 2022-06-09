@@ -6,7 +6,6 @@
 #include "GLFW/glfw3.h"
 
 #include "cochar.hpp"
-#include "wcf.hpp"
 
 namespace wcf
 {
