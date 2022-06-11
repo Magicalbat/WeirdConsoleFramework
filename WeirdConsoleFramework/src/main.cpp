@@ -1,65 +1,42 @@
 #include <iostream>
 #include <vector>
-#include <chrono>
+#include <algorithm>
 
 #include "wcf.hpp"
 #include "vector2.hpp"
-
-const uint32_t WIDTH = 160;
-const uint32_t HEIGHT = 90;
-const uint32_t CHAR_WIDTH = 8;
-const uint32_t CHAR_HEIGHT = 8;
-
-const float CHAR_UV_STEP = 1.0f / 225.0f;
+#include "rect.hpp"
 
 int main()
 {
-	wcf::init(WIDTH, HEIGHT, CHAR_WIDTH, CHAR_HEIGHT);
+	wcf::init(160, 90, 8, 8);
 
-	std::vector<wcf::Vector2> chars(WIDTH);
-	for (auto& pos : chars)
-	{
-		pos.x = (float)(rand() % WIDTH);
-		pos.y = -(float)(rand() % HEIGHT);
-	}
+	wcf::Rect r1{20, 20, 20, 20};
+	wcf::Rect r2{ 0, 0, 10, 10 };
 
 	auto update = [&](float delta)
 	{
-		for (auto& pos : chars)
-		{
-			pos.y += 5.0f * delta;
-
-			if (pos.y > HEIGHT)
-			{
-				pos.x = (float)(rand() % WIDTH);
-				pos.y = -(float)(rand() % 10);
-			}
-		}
+		wcf::Vector2 mousePos = wcf::getMousePos();
+		r2.x = mousePos.x; r2.y = mousePos.y;
 	};
 
-	auto draw = [&]() 
+	auto draw = [&]()
 	{
-		for (auto& pos : chars)
-		{
-			if (fmodf(pos.y, 1.0f) < 0.1f && pos.y >= 0 && pos.y < HEIGHT)
-			{
-				uint8_t chr = rand() % (255 - ' ') + ' ';
-				wcf::setCochar((int)pos.x, (int)pos.y, { chr, glm::vec3(0, 1, 0) });
-			}
-		}
+		wcf::clear({ ' ', {0,0,0} });
 
-		for (int x = 0; x < wcf::width(); x++)
-		{
-			for (int y = 0; y < wcf::height(); y++)
-			{
-				wcf::Cochar& cochar = wcf::getCochar(x, y);
-				if (cochar.col.y > 0)
-					cochar.col.y -= 0.0025f;
-			}
-		}
-			
+		if (r1.collideRect(r2))
+			wcf::fillRect(r1, { 'X', {0, 1, 1} });
+		else
+			wcf::fillRect(r1, { 'X', {0, 0, 1} });
+
+		wcf::fillRect(r2, { 'X', {1, 0, 1} });
 	};
-	
+
+	wcf::setKeyCallback([](wcf::Key key, bool pressed)
+		{
+			if (key == wcf::Key::SPACE)
+				std::cout << "Space!" << std::endl;
+		});
+
 	wcf::start(60.0f, update, draw);
 
 	return 0;

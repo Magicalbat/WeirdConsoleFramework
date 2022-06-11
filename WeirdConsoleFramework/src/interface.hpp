@@ -1,11 +1,14 @@
 #pragma once
 
 #include <vector>
+#include <functional>
 
 #include "glad/glad.h"
 #include "GLFW/glfw3.h"
 
 #include "cochar.hpp"
+#include "keys.hpp"
+#include "vector2.hpp"
 
 namespace wcf
 {
@@ -19,13 +22,20 @@ namespace wcf
             :m_Width(width), m_Height(height), m_CharWidth(charWidth), m_CharHeight(charHeight)
         {}
 
-        virtual void clear() {}
+        inline void setKeyCallback(std::function<void(wcf::Key key, bool pressed)> callback) { m_KeyCallback = callback; }
+        inline void callKeyCallback(wcf::Key key, bool pressed) { m_KeyCallback(key, pressed); }
+
         virtual void drawScreen(std::vector<Cochar>& screen) {}
     
-        virtual bool running() { return false; }
+        virtual bool running() const { return false; }
+
+        virtual Vector2 getMousePos() const { return { 0.0f, 0.0f }; }
 
     protected:
+
         uint32_t m_Width, m_Height, m_CharWidth, m_CharHeight;
+
+        std::function<void(wcf::Key key, bool pressed)> m_KeyCallback;
     };
 
     class OpenGL_Interface : public Interface
@@ -35,10 +45,11 @@ namespace wcf
         OpenGL_Interface(uint32_t width, uint32_t height, uint32_t charWidth, uint32_t charHeight);
         ~OpenGL_Interface();
 
-        virtual void clear() override;
         virtual void drawScreen(std::vector<Cochar>& screen) override;
 
-        virtual bool running() override;
+        virtual bool running() const override;
+
+        virtual Vector2 getMousePos() const override;
 
     private:
 

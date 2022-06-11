@@ -39,7 +39,15 @@ OpenGL_Interface::OpenGL_Interface(uint32_t width, uint32_t height, uint32_t cha
 
 	gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 
-	std::cout << "\n\x1b[36mVersion: " << glGetString(GL_VERSION) << ", Renderer: " << glGetString(GL_RENDERER) << "\x1b[0m" << std::endl;
+	glfwSetWindowUserPointer(m_Window, this);
+	glfwSetKeyCallback(m_Window, [](GLFWwindow* window, int key, int scancode, int action, int mods)
+		{
+			OpenGL_Interface* glInterface = (OpenGL_Interface*)glfwGetWindowUserPointer(window);
+			if (action != GLFW_REPEAT)
+				glInterface->callKeyCallback((wcf::Key)key, action == GLFW_PRESS);
+		});
+
+	std::cout << "\n\x1b[36mOpenGL Version: " << glGetString(GL_VERSION) << ", Renderer: " << glGetString(GL_RENDERER) << "\x1b[0m" << std::endl;
 
 	uint32_t texture;
 	glGenTextures(1, &texture);
@@ -123,11 +131,6 @@ OpenGL_Interface::~OpenGL_Interface()
 	glfwTerminate();
 }
 
-void OpenGL_Interface::clear()
-{
-	glClearColor(0, 0, 0, 1);
-}
-
 void OpenGL_Interface::drawScreen(std::vector<Cochar>& screen)
 {
     for (uint32_t y = 0; y < m_Height; y++)
@@ -152,9 +155,16 @@ void OpenGL_Interface::drawScreen(std::vector<Cochar>& screen)
 	glfwPollEvents();
 }
 
-bool OpenGL_Interface::running()
+bool OpenGL_Interface::running() const 
 {
 	return !glfwWindowShouldClose(m_Window);
+}
+
+Vector2 OpenGL_Interface::getMousePos() const
+{
+	double x, y;
+	glfwGetCursorPos(m_Window, &x, &y);
+	return { (float)x, (float)y };
 }
 
 unsigned int OpenGL_Interface::loadShaderProgram(const char* vertexPath, const char* fragmentPath)
